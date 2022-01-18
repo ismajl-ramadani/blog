@@ -1,3 +1,6 @@
+html {
+    background: #1a1a1a;
+}
 body {
     margin-right: auto;
     margin-left:  auto;
@@ -25,7 +28,7 @@ h2 {
     }
         .page-title a {
             text-decoration: none;
-            color: #222;
+            color: #d1cfcf
         }
     .page-list {
         margin: 0 auto;
@@ -36,7 +39,7 @@ h2 {
             margin-top: 30px;
         }
             .page-list-item-title a{
-                color: #222;
+                color: #d1cfcf;
                 text-decoration: none;
             }
             .page-list-item-publishing-date {
@@ -45,4 +48,5 @@ h2 {
             .page-list-item-text-content {
                 font-size: 1.0em;
                 line-height: 1.6em;
+                color: #d1cfcf;
             }

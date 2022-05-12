@@ -1,0 +1,14 @@
+baseURL: 'http://example.org/'
+languageCode: 'en-us'
+title: Ismajl Ramadani
+theme: mini
+
+params:
+  # Site Author
+  author: Ismajl Ramadani
+  # Author biography
+  bio: Software Engineer
+  # Site Description, used in HTML meat
+  description: My Blog
+
+  showToc: true

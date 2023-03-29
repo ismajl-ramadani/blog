@@ -3,5 +3,44 @@ title: "Open Source Generic API Protocol"
 date: 2022-05-13T19:14:09+02:00
 draft: false
 ---
-Dart Engine: Open source generic API protocol with a Go Lang implementation for simple API creation.
-...
+Dart Engine: Open source generic API protocol with a Node.js implementation for simple API creation.
+
+<h2>Problem</h2>
+
+As a Node.js developer when I need to create new REST API to access a Data Store I need to go through a process of creating a project,
+find my self between all the existing packages, choose one, and do bunch of configurations adhering to the package
+documentation. This process is very time consuming and I always end up with a lot of boilerplate code. 
+<h2>Solution</h2>
+
+Thinking that this might be a common problem for other developers  I decided to create a generic API protocol for Rest APIs that expose a Data Store and different implementations that will allow me to create such a project in a matter of minutes.
+
+<h2>Specification</h2>
+<small>This is a draft varsion</small>
+<br/>
+A Dart Engine implementation should be according to the following specification:
+<ul>
+    <li>
+        It consists of an entry file, that describes the API.
+    </li>
+    <li>
+        It generates a REST API that exposes a specfied SQL Data Store.
+    </li>
+    <li>
+        Generated endpoints enable CRUD operations on the Data Store.
+    </li>
+    <li>
+        It is extensible and allows for custom endpoints.
+    </li>
+    <li>
+        It is configurable and allows for customizing the generated API.
+    </li>
+    <li>
+        Deplyoment is easy and can be done with a single command.
+    </li>
+    <li>
+        Apply security to the generated API.
+    </li>
+    <li>
+        OpenAPI documentation is generated.
+    </li>
+</ul>

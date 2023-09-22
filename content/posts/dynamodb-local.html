@@ -1,0 +1,88 @@
+---
+title: "Setting up DynamoDB for local development"
+date: 2023-09-22T15:00:23+02:00
+draft: false
+---
+<h1>👋</h1>
+Amazon DynamoDB is managed, serverless key-value NoSQL database that is quite
+popular among AWS users/developers. It is a great choice for applications that
+require low latency and flexible data models. When developing applications that
+use DynamoDB, it is a good idea to have a local instance of DynamoDB running on
+your machine. This will allow you to develop and test your application without
+having to connect to the cloud. In this short post, I will share how I set up
+DynamoDB for local development and for writing integration tests.
+
+<h2>Prerequisites</h2>
+The only prerequisite is to have Docker installed on your machine.
+
+<h2>Docker Compose</h2>
+The easiest way to set up DynamoDB locally in my opinion is to use Docker Compose. And the content 
+of the `docker-compose.yml` file is as follows:
+
+{{< highlight yaml>}}
+version: '3.8'
+services:
+ dynamodb-local:
+   command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+   image: "amazon/dynamodb-local:latest"
+   container_name: dynamodb-local
+   ports:
+     - "8000:8000"
+   volumes:
+     - "./docker/dynamodb:/home/dynamodblocal/data"
+   working_dir: /home/dynamodblocal
+{{< /highlight >}}
+
+This will create a container named `dynamodb-local` and expose port `8000` on
+your machine using `amazon/dynamodb-local` image.
+
+To start the container, run the following command:
+
+{{< highlight bash>}}
+docker-compose up -d
+{{< /highlight >}}
+
+And that's it! You now have a local instance of DynamoDB running on your machine.
+
+To test the setup you can use the AWS CLI or write a simple application that
+connects to DynamoDB. 
+
+Using the AWS CLI, you can run the following command to list all tables:
+
+{{< highlight bash>}}
+aws dynamodb list-tables --endpoint-url http://localhost:8000
+{{< /highlight >}}
+
+If you want to use a simple NodeJS application to test the connection, you can use the following code:
+
+{{< highlight javascript>}} 
+const { DynamoDBClient, ListTablesCommand } = require('@aws-sdk/client-dynamodb');
+const main = async () => {
+  const client = new DynamoDBClient({
+    region: 'us-east-1',
+    endpoint: 'http://localhost:8000',
+  });
+
+  const command = new ListTablesCommand({});
+  const response = await client.send(command);
+  console.log(response.TableNames);
+
+};
+{{< /highlight >}}
+I prefer to use the second approach because it gives me more flexibility in terms of accessing 
+DynamoDB, and I also can use and modify the code to test different scenarios and doing experiments
+before writing the actual code.
+
+<h2>Conclusion</h2>
+In this post, I shared how I set up DynamoDB for local development. I hope you
+found it useful. If you're interested in learning more about DynamoDB, I
+recommend checking out the official documentation.
+
+<br />
+
+<pre>
+🤟
+Also, I'm available for consulting and freelance work.
+If you need help with your AWS infrastructure, feel free to reach out to me at
+helloismajl@gmail.com
+</pre>

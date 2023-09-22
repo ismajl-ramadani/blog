@@ -95,9 +95,7 @@ in the post_build phase after <code>docker push $REPOSITORY_URI:$IMAGE_TAG</code
 {{< /highlight >}}
 
 
-The first command creates a file named imageDetail.json that contains the image URI, the second command
-creates a file named imagedefinitions.json that contains the image name and tag, and the last two commands
-replace the placeholders in the imagedefinitions.json file with the actual values. 
+The commands create a file named imagedefinitions.json that contains the image name and uri and also debugging the content of the file to see if it's generated properly. 
 
 To store the imagedefinitions.json file as an artifact in the build stage, I added the following lines to the
 end of the buildspec.yml file:

@@ -1,0 +1,144 @@
+---
+title: "Imagedefinitions for Amazon ECS Standard Deployment"
+date: 2023-09-22T16:17:29+02:00
+draft: true
+---
+
+Recently I had to deploy a new service to AWS ECS using CodePipeling with CodeCommit as a source provider.
+I struggled a bit with the imagedefinitions.json file and I decided to write this post to share the resources
+I used to understand the file format and how/when to generate it, and also to keep a reference for myself.
+
+<h1>About the service</h1>
+
+The service was a heat pump performance evaluation tool writen
+in Python as Web Application using Bokeh framework.
+
+The client decided to use ECS because of the simplicity of the deployment and the ability to use
+Fargate as a compute engine. They packed the application in a Docker container and
+pushed it to ECR manually. My task was to automate the deployment process using CodePipeline.
+
+I started by creating a new CodePipeline using the AWS Console. I chose CodeCommit as a source provider
+and ECS as a deployment provider, the ECS cluster was already created by the client.
+
+<h2> The build part </h2>
+The build stage was pretty simple, I used CodeBuild to build the Docker image and push it to ECR.
+The buildspec.yml file looked like this:
+
+{{< highlight yaml>}}
+version: 0.2
+phases: 
+  pre_build: 
+    commands: 
+    - echo Logging in to Amazon ECR...
+    - aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin REGISTRY_URI
+    - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+    - IMAGE_TAG=${COMMIT_HASH:=latest}
+    - REPOSITORY_URI=REGISTRY_URI/REPOSITORY_NAME
+  build: 
+    commands: 
+    - echo Build started on `date` 
+    - echo Building the Docker image... 
+    - docker build -t $REPOSITORY_URI:latest .
+    - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+    - apt-get install jq -y
+  post_build: 
+    commands: 
+    - echo Build completed on `date` 
+    - echo pushing to repo
+    - docker push $REPOSITORY_URI:latest
+    - docker push $REPOSITORY_URI:$IMAGE_TAG
+{{< /highlight >}}
+
+It worked as expected, the image was pushed to ECR and I could see it in the console.
+
+The next step was to create the deployment stage.
+
+<h2> The deployment part </h2>
+
+I chose ECS as a deployment provider and went through the configuration steps. I chose the cluster
+and the service and then I had to provide the imagedefinitions.json file. I was not sure what to put there
+so I decided to leave it empty and see what happens.
+
+The pipeline was created and I ran it. The build stage was successful but the deployment stage failed 
+with an error saying that the imagedefinitions.json file is missing. I figured it out that I have to 
+provide a file named imagedefinitions.json that contains the image name and tag, because CodePipeline deploy
+worker uses this file to know where to pull the image from in order to deploy it to ECS.
+
+I found <a
+    href="https://docs.aws.amazon.com/codepipeline/latest/userguide/file-reference.html#pipelines-create-image-definitions"
+    target="_blank"> this article
+</a>
+helpful to understand the imagedefinitions.json file format. The article documenet the JSON structure of
+the file and also provides an example of the file content. The content of the file should look like the following
+snippet, and it should be stored as artifact in the build stage.
+
+{{< highlight json>}}
+[
+  {
+    "name": "sample-app",
+    "imageUri": "IMAGE_URI"
+  }
+]
+{{< /highlight >}}
+
+
+To be able to generate it I've used the following commands in the buildspec.yml file 
+in the post_build phase after <code>docker push $REPOSITORY_URI:$IMAGE_TAG</code>
+
+{{< highlight yaml>}}
+    - ContainerName="CONTAINER_NAME"
+    - ImageURI=$(cat imageDetail.json | jq -r '.ImageURI')
+    - printf '[{"name":"CONTAINER_NAME","imageUri":"IMAGE_URI"}]' > imagedefinitions.json
+    - sed -i -e "s|CONTAINER_NAME|$ContainerName|g" imagedefinitions.json
+    - sed -i -e "s|IMAGE_URI|$ImageURI|g" imagedefinitions.json
+    - cat imagedefinitions.json
+{{< /highlight >}}
+
+
+The first command creates a file named imageDetail.json that contains the image URI, the second command
+creates a file named imagedefinitions.json that contains the image name and tag, and the last two commands
+replace the placeholders in the imagedefinitions.json file with the actual values. 
+
+To store the imagedefinitions.json file as an artifact in the build stage, I added the following lines to the
+end of the buildspec.yml file:
+{{< highlight yaml>}}
+artifacts:
+    files:
+        - imagedefinitions.json
+{{< /highlight >}}
+
+
+I ran the pipeline again and this time it was successful.
+<br /> <br />
+As a conclusion,
+The imagedefinitions.json file is required when using CodePipeline to deploy to ECS. It should be stored as
+an artifact in the build stage and it should contain the image name and tag. The file can be generated using
+the commands in the post_build phase of the buildspec.yml file.
+
+<pre>
+🤟
+Also, I'm available for consulting and freelance work.
+If you need help with your AWS infrastructure,
+feel free to reach out to me at helloismajl@gmail.com
+</pre>
+
+<h3> References </h3>
+<cite>
+    <a
+        href="https://docs.aws.amazon.com/codepipeline/latest/userguide/file-reference.html#pipelines-create-image-definitions"
+        target="_blank"
+    >
+    https://docs.aws.amazon.com/codepipeline/latest/userguide/file-reference.html#pipelines-create-image-definitions</a>
+</cite>
+<br />
+<cite>
+    <a href="https://stackoverflow.com/questions/58849736/did-not-find-the-image-definition-file-imagedefinitions-json" target="_blank">
+        https://stackoverflow.com/questions/58849736/did-not-find-the-image-definition-file-imagedefinitions-json
+    </a>
+</cite>
+<br />
+<cite>
+    <a href="https://docs.aws.amazon.com/codebuild/latest/userguide/sample-docker.html" target="_blank">
+        https://docs.aws.amazon.com/codebuild/latest/userguide/sample-docker.html
+    </a>
+</cite>

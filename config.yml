@@ -1,6 +1,6 @@
-baseURL: 'http://example.org/'
+baseURL: 'https://ismajlramadani.com'
 languageCode: 'en-us'
-title: Ismajl Ramadani
+title: Ismajl Ramadani - Software Engineer
 theme: mini
 
 params:
@@ -12,3 +12,8 @@ params:
   description: My Blog
 
   showToc: true
+
+  enableComments: true
+
+  site:
+    enableComments: true
